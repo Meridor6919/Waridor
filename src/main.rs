@@ -69,6 +69,23 @@ fn main() {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                     return;
                 },
+                glutin::event::WindowEvent::KeyboardInput{ input, .. } => match input.virtual_keycode{
+                    Some(x) =>{
+                         if x == glutin::event::VirtualKeyCode::Left
+                         {
+                             *control_flow = glutin::event_loop::ControlFlow::Exit;
+                             return;
+                         }
+                    },
+                    _=> return,
+                },
+                glutin::event::WindowEvent::MouseInput{ button,.. } => match button{
+                    glutin::event::MouseButton::Right =>{
+                        *control_flow = glutin::event_loop::ControlFlow::Exit;
+                        return;
+                    },
+                    _=> return,
+                },
                 _ => return,
             },
             glutin::event::Event::NewEvents(cause) => match cause {
