@@ -1,4 +1,6 @@
 pub struct Combat{
+    closing_request : bool,
+
     pub moving_left : bool,
     pub moving_right : bool,
     pub shooting: bool,
@@ -6,6 +8,7 @@ pub struct Combat{
 impl Default for Combat {
     fn default() -> Combat {
         Combat {
+            closing_request : false,
             moving_left : false,
             moving_right : false,
             shooting: false,
@@ -30,13 +33,14 @@ impl crate::state::State for Combat{
             _=>return,
         }
     }
-    fn update(&mut self, player : &mut crate::player::Player){
+    fn update(&mut self, player : &mut crate::player::Player) -> bool{
         if self.moving_left{
             player.pos -= player.movement_speed;
         }
         if self.moving_right{
             player.pos += player.movement_speed;
         }
+        return self.closing_request;
     }
     fn draw(&mut self, player : &mut crate::player::Player, glyph_brush : &mut crate::GlyphBrush, display : &crate::glium::Display){
     }

@@ -21,7 +21,8 @@ use std::io::Cursor;
 use player::{Player};
 
 struct Game{
-    current_state : Box<dyn state::State>,
+    state_type : state::StateTypes,
+    state : Box<dyn state::State>,
     player : player::Player
 }
 impl Game{
@@ -30,19 +31,34 @@ impl Game{
         match f{
             //Game related input
             glutin::event::VirtualKeyCode::S =>{
-                self.current_state = Box::new(shop::Shop{});
+                self.state = Box::new(shop::Shop::default());
+                self.state_type = state::StateTypes::shop;
             },
             glutin::event::VirtualKeyCode::C =>{
-                self.current_state = Box::new(combat::Combat::default());
+                self.state = Box::new(combat::Combat::default());
+                self.state_type = state::StateTypes::combat;
             },
-            _=>self.current_state.input(&mut self.player, input),
+            _=>self.state.input(&mut self.player, input),
+        }
+    }
+    fn update(&mut self){
+        if self.state.update(&mut self.player){
+            if matches!(self.state_type, state::StateTypes::shop){
+                self.state = Box::new(combat::Combat::default());
+                self.state_type = state::StateTypes::combat;
+            }
+            else{
+                self.state = Box::new(shop::Shop::default());
+                self.state_type = state::StateTypes::shop;
+            }
         }
     }
 }
 impl Default for Game {
     fn default() -> Game {
         Game {
-            current_state : Box::new(combat::Combat::default()),
+            state : Box::new(combat::Combat::default()),
+            state_type : state::StateTypes::combat,
             player : player::Player::default()
         }
     }
@@ -133,7 +149,7 @@ fn main() {
             _ => return,
         }
 
-        game.current_state.update(&mut game.player);
+        game.update();
 
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
@@ -148,7 +164,7 @@ fn main() {
             tex: &texture,
         };
 
-        game.current_state.draw(&mut game.player, &mut glyph_brush, &display);
+        game.state.draw(&mut game.player, &mut glyph_brush, &display);
         glyph_brush.draw_queued(&display, &mut target);
         target.draw(&vertex_buffer, &indices, &program, &uniforms,
                     &Default::default()).unwrap();
