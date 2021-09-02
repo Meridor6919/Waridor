@@ -20,7 +20,7 @@ pub fn main() {
         .with_srgb(true);
     let display = glium::Display::new(window, context, &event_loop).unwrap();
 
-    let font_name: &[u8] = include_bytes!("../graphics/Freedom.ttf");
+    let font_name: &[u8] = include_bytes!("../resources/Freedom.ttf");
     let fonts = vec![Font::from_bytes(font_name).unwrap()];
     let mut glyph_brush = GlyphBrush::new(&display, fonts);
 
