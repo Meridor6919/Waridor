@@ -27,6 +27,9 @@ struct Game{
 }
 impl Game{
     fn input(&mut self, input : glutin::event::KeyboardInput){
+        if input.virtual_keycode == None{
+            return;
+        }
         let f = input.virtual_keycode.unwrap();
         match f{
             //Game related input
