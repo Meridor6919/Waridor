@@ -3,6 +3,7 @@ extern crate glium;
 extern crate glium_glyph;
 extern crate glyph_brush;
 
+mod game;
 mod player;
 mod state;
 mod shop;
@@ -19,53 +20,6 @@ use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::{ControlFlow, EventLoop};
 use std::io::Cursor;
 use player::{Player};
-
-struct Game{
-    state_type : state::StateTypes,
-    state : Box<dyn state::State>,
-    player : player::Player
-}
-impl Game{
-    fn input(&mut self, input : glutin::event::KeyboardInput){
-        if input.virtual_keycode == None{
-            return;
-        }
-        let f = input.virtual_keycode.unwrap();
-        match f{
-            //Game related input
-            glutin::event::VirtualKeyCode::S =>{
-                self.state = Box::new(shop::Shop::default());
-                self.state_type = state::StateTypes::shop;
-            },
-            glutin::event::VirtualKeyCode::C =>{
-                self.state = Box::new(combat::Combat::default());
-                self.state_type = state::StateTypes::combat;
-            },
-            _=>self.state.input(&mut self.player, input),
-        }
-    }
-    fn update(&mut self){
-        if self.state.update(&mut self.player){
-            if matches!(self.state_type, state::StateTypes::shop){
-                self.state = Box::new(combat::Combat::default());
-                self.state_type = state::StateTypes::combat;
-            }
-            else{
-                self.state = Box::new(shop::Shop::default());
-                self.state_type = state::StateTypes::shop;
-            }
-        }
-    }
-}
-impl Default for Game {
-    fn default() -> Game {
-        Game {
-            state : Box::new(combat::Combat::default()),
-            state_type : state::StateTypes::combat,
-            player : player::Player::default()
-        }
-    }
-}
 
 fn main() {
 
@@ -84,7 +38,7 @@ fn main() {
     let fonts = vec![Font::from_bytes(font_name).unwrap()];
     let mut glyph_brush = GlyphBrush::new(&display, fonts);
 
-    let mut game = Game::default();
+    let mut game = game::Game::default();
 
     #[derive(Copy, Clone)]
     struct Vertex {
