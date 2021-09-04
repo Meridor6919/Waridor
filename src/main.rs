@@ -8,6 +8,7 @@ mod player;
 mod state;
 mod shop;
 mod combat;
+mod matrix_transforms;
 
 use glium::glutin::window::{Window, WindowBuilder, WindowAttributes};
 use glium::glutin::{Api, GlProfile, GlRequest};
@@ -48,10 +49,10 @@ fn main() {
 
     implement_vertex!(Vertex, position, tex_coords);
 
-    let vertex1 = Vertex { position: [-0.0625, -1.0], tex_coords: [0.0, 0.0] };
-    let vertex2 = Vertex { position: [ -0.0625,  -0.875], tex_coords: [0.0, 1.0] };
-    let vertex3 = Vertex { position: [ 0.0625, -0.875], tex_coords: [1.0, 1.0] };
-    let vertex4 = Vertex { position: [ 0.0625, -1.0], tex_coords: [1.0, 0.0] };
+    let vertex1 = Vertex { position: [-0.0625, -0.0625], tex_coords: [0.0, 0.0] };
+    let vertex2 = Vertex { position: [ -0.0625,  0.0625], tex_coords: [0.0, 1.0] };
+    let vertex3 = Vertex { position: [ 0.0625, 0.0625], tex_coords: [1.0, 1.0] };
+    let vertex4 = Vertex { position: [ 0.0625, -0.0625], tex_coords: [1.0, 0.0] };
     
     let shape = vec![vertex1, vertex2, vertex4, vertex3];
 
@@ -63,10 +64,21 @@ fn main() {
         in vec2 position;
         in vec2 tex_coords;
         out vec2 v_tex_coords;
-        uniform mat4 matrix;
+
+        uniform MatrixBlock
+        {
+          mat4 m[16];
+        } matrices;
+        
         void main() {
             v_tex_coords = tex_coords;
-            gl_Position = matrix * vec4(position, 0.0, 1.0);
+            gl_Position = vec4(position, 0.0, 1.0);
+            gl_Position = gl_Position;
+            for(int i=0;i < 16;++i)
+            {
+                int j = i;
+                gl_Position = matrices.m[j] * gl_Position;
+            }
         }
     "#;
 
@@ -111,13 +123,23 @@ fn main() {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
 
+        let identity_matrix = matrix_transforms::IDENTITY_MATRIX;
+        let rotate_y_matrix = matrix_transforms::rotate_around_y_axis(game.player.pos);
+        let move_y_matrix = matrix_transforms::translate([0.0, -0.5, 0.0]);
+        let rotate_z_matrix = matrix_transforms::rotate_around_z_axis(game.player.pos);
+
+        let matrices: glium::uniforms::UniformBuffer<[[[f32; 4]; 4]; 16]>;
+        let result = glium::uniforms::UniformBuffer::new(&display, [move_y_matrix, rotate_y_matrix,rotate_z_matrix,identity_matrix,identity_matrix, identity_matrix,identity_matrix,identity_matrix,identity_matrix, identity_matrix,identity_matrix,identity_matrix,identity_matrix, identity_matrix,identity_matrix,identity_matrix]);
+        match result{
+            Ok(v) => matrices = v,
+            Err(_e) =>{
+                *control_flow = glutin::event_loop::ControlFlow::Exit;
+                return;
+            }
+        }
+
         let uniforms = uniform! {
-            matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [ game.player.pos , 0.0, 0.0, 1.0f32],
-            ],
+            MatrixBlock : &matrices,
             tex: &texture,
         };
 

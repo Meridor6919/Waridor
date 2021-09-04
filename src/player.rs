@@ -10,7 +10,7 @@ impl Default for Player {
             cash : 0,
             movement_speed : 0.025,
             fire_rate : 1.0,
-            pos : -0.125,
+            pos : 0.0,
         }
     }
 }
